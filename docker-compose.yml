@@ -1,0 +1,44 @@
+version: '3'
+services:
+  order-service:
+    build: './order-service'
+    depends_on:
+      - services-db
+    environment:
+      - DB_URI=mysql://root:password@services-db/order?charset=UTF8
+    volumes:
+      - ./order-service:/opt/app
+    ports:
+      - '8080:8080'
+
+  payment-service:
+    build: './payment-service'
+    depends_on:
+      - services-db
+    environment:
+      - DB_URI=mysql://root:password@services-db/payment?charset=UTF8
+    volumes:
+      - ./payment-service:/opt/app
+    ports:
+      - '8081:8081'
+
+  services-db:
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+    image: mysql:8.0.22
+    volumes:
+      - ./init:/docker-entrypoint-initdb.d
+    ports:
+      - '8088:3306'
+    cap_add:
+      - CAP_SYS_NICE
+
+  react-client:
+    build: './react-client'
+    depends_on:
+      - order-service
+      - payment-service
+    volumes:
+      - ./react-client:/opt/app
+    ports:
+      - '3000:3000'
